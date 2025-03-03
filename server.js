@@ -1,33 +1,47 @@
 require('dotenv').config();  // Carga las variables de entorno desde .env
+
 const express = require('express');
 const cors = require('cors');
-
+const { Pool } = require("pg");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-require('dotenv').config(); // Cargar variables de entorno
+// Validación de variables de entorno esenciales
+if (!process.env.DB_USER || !process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_PASS || !process.env.DB_PORT) {
+    console.error("❌ ERROR: Falta una o más variables de entorno requeridas para la conexión a PostgreSQL.");
+    process.exit(1); // Detiene la ejecución del backend si hay un error en la configuración
+}
 
-const { Pool } = require("pg");
-
+// Configuración de la conexión a PostgreSQL
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASS,
-  port: process.env.DB_PORT,
-  ssl: { rejectUnauthorized: false } // Para permitir conexiones seguras
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASS,
+    port: process.env.DB_PORT,
+    ssl: { rejectUnauthorized: false } // Para permitir conexiones seguras
 });
 
+// Conexión a la base de datos
 pool.connect()
-  .then(() => console.log("✅ Conexión exitosa a la base de datos"))
-  .catch(err => console.error("❌ Error al conectar con la base de datos:", err));
-    
+    .then(() => console.log("✅ Conexión exitosa a PostgreSQL en AWS RDS"))
+    .catch(err => {
+        console.error("❌ Error al conectar con PostgreSQL:", err);
+        process.exit(1); // Detiene la ejecución si no puede conectarse a la base de datos
+    });
 
-app.use(cors());
+
+// Middleware
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || '*', // En producción, reemplázalo con el dominio del frontend
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
-// Endpoint de prueba para verificar la API
+// Endpoint de prueba
 app.get('/', (req, res) => {
     res.send('API funcionando con PostgreSQL');
 });
@@ -38,10 +52,12 @@ app.get('/api/usuarios', async (req, res) => {
         const result = await pool.query("SELECT * FROM usuarios");
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("❌ Error al obtener datos de la base de datos:", err);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 
+// Iniciar el servidor
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
