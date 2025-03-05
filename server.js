@@ -34,7 +34,7 @@ pool.connect()
 
 // Middleware
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*', // En producción, reemplázalo con el dominio del frontend
+    origin: ['http://3.86.252.99', 'http://balanceador-docker-670246088.us-east-1.elb.amazonaws.com'], 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type']
 }));
