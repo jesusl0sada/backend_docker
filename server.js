@@ -47,9 +47,9 @@ app.get('/', (req, res) => {
 });
 
 // Endpoint para obtener datos de la base de datos
-app.get('/api/usuarios', async (req, res) => {
+app.get('/api/movies', async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM usuarios");
+        const result = await pool.query("SELECT * FROM movies");
         res.json(result.rows);
     } catch (err) {
         console.error("❌ Error al obtener datos de la base de datos:", err);
